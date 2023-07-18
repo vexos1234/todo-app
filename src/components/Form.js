@@ -11,15 +11,17 @@ import {
 import React from "react";
 import "./styles.css";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { DevTool } from "@hookform/devtools";
+import { Form as FormRRD } from "react-router-dom";
 
 function Form() {
-  const createProductRequest = useMutation((data: any) =>
-    axios.post("http://localhost:3005/products", data)
-  );
+  const form = useForm();
+  const { register, control, handleSubmit } = form;
 
-  const { register, handleSubmit } = useForm();
+  const onSubmit = (data) => {
+    console.log("Form Submited", data);
+  };
 
   return (
     <div>
@@ -32,20 +34,25 @@ function Form() {
           <PopoverCloseButton />
           <PopoverHeader>Confirmation!</PopoverHeader>
           <PopoverBody>
-            <FormControl isRequired>
-              <FormLabel {...register("task")}>Task</FormLabel>
-              <Input placeholder="First name" />
-              <FormLabel {...register("date")}>Date</FormLabel>
-              <Input type="datetime-local" placeholder="First name" />
-              <FormLabel {...register("desc")}>Description</FormLabel>
-              <Input placeholder="First name" />
-              <Button onClick={handleSubmit(onSubmit)} style={{ marginTop: 5 }}>
-                ADD TASK
-              </Button>
-            </FormControl>
+            <form className="form" onSubmit={handleSubmit(onSubmit)}>
+              <input
+                type="text"
+                placeholder="Book Title"
+                {...register("bookTitle")}></input>
+              <input
+                type="text"
+                placeholder="Rating"
+                {...register("rating")}></input>
+              <input
+                type="text"
+                placeholder="Review"
+                {...register("review")}></input>
+              <input type="submit" placeholder="Review"></input>
+            </form>
           </PopoverBody>
         </PopoverContent>
       </Popover>
+      <DevTool control={control} />
     </div>
   );
 }
