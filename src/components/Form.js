@@ -1,4 +1,4 @@
-import { Box, Button, Center, Checkbox, Flex, FormControl, FormLabel, HStack, Heading, Input, Spacer, Stack } from "@chakra-ui/react";
+import { Box, Button, Center, Checkbox, Flex, Heading, Input, Spacer, Stack } from "@chakra-ui/react";
 import {
   Popover,
   PopoverTrigger,
@@ -8,45 +8,59 @@ import {
   PopoverArrow,
   PopoverCloseButton,
 } from "@chakra-ui/react";
-import React from "react";
+import React, { useEffect } from "react";
 import "./styles.css";
 import { useForm, SubmitHandler } from "react-hook-form";
 import axios from "axios";
 import { DevTool } from "@hookform/devtools";
-import { Form as FormRRD } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Table,
   Thead,
   Tbody,
-  Tfoot,
   Tr,
   Th,
   Td,
   TableCaption,
   TableContainer,
 } from '@chakra-ui/react'
-import { BiMessageSquareAdd } from 'react-icons/bi';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { RiDeleteBin5Line } from 'react-icons/ri'
 
 function Form() {
+  const queryClient = useQueryClient();
+
   const request = useQuery(["FetchProduct"], () =>
-    axios.get("https://jsonplaceholder.typicode.com/posts")
+    axios.get("https://64b8141d21b9aa6eb07987de.mockapi.io/task")
   );
 
-  const form = useForm();
-  const { register, control, handleSubmit } = form;
+  const createTask = useMutation((data) =>
+    axios.post("https://64b8141d21b9aa6eb07987de.mockapi.io/task", data)
+  );
 
-  const onSubmit = (data) => {
+
+  const { register, control, handleSubmit, reset, isSubmitSuccessful } = useForm();
+
+  const onSubmit = async (data) => {
+    const response = await createTask.mutateAsync(data);
     console.log("Form Submited", data);
+    queryClient.invalidateQueries(["FetchProducts"]);
+    console.log(response);
+    reset();
   };
+
+  const deletePost = useMutation((id) => {
+    return axios.delete(`https://64b8141d21b9aa6eb07987de.mockapi.io/task/${id}`);
+  });
 
   const tasks = request.data?.data;
   console.log(tasks);
   if (tasks === undefined) return null;
+
   return (
-    <div>
+    <div className="centered-box">
       {/* add tasks */}
-      <Box>
+      <Box className="box">
         <Center>
           <Heading>To Do List</Heading>
         </Center>
@@ -61,11 +75,11 @@ function Form() {
               <PopoverCloseButton />
               <PopoverHeader>Write A Task For Today!</PopoverHeader>
               <PopoverBody>
-                <form className="form" onSubmit={handleSubmit(onSubmit)}>
+                <form className="form">
                   <Input
                     type="task"
                     placeholder="What you want to do?"
-                    {...register("bookTitle")}></Input>
+                    {...register("name")}></Input>
                   <Input
                     type="datetime-local"
                     placeholder="When?"
@@ -74,7 +88,7 @@ function Form() {
                     type="text"
                     placeholder="Describe (optional)"
                     {...register("description")}></Input>
-                  <Button type="submit" placeholder="submit" style={{ marginTop: 5 }}>ADD</Button>
+                  <Button type="submit" placeholder="submit" onClick={handleSubmit(onSubmit)} style={{ marginTop: 5 }}>ADD</Button>
                 </form>
               </PopoverBody>
             </PopoverContent>
@@ -90,35 +104,46 @@ function Form() {
             <TableCaption>You can do wathever you want with persistance</TableCaption>
             <Thead>
               <Tr>
-                <Th>Task</Th>
+                <Th></Th>
+                <Th>Tasks</Th>
                 <Th>Date</Th>
                 <Th>Completed</Th>
               </Tr>
             </Thead>
             <Tbody>
-              <Tr>
-                <Td>inches</Td>
-                <Td >millimetres (mm)</Td>
-                <Td><Checkbox /></Td>
-              </Tr>
-              <Tr>
-                <Td>feet</Td>
-                <Td>centimetres (cm)</Td>
-                <Td><Checkbox /></Td>
-              </Tr>
-              <Tr>
-                <Td>yards</Td>
-                <Td>metres (m)</Td>
-                <Td><Checkbox /></Td>
-              </Tr>
+              <Box
+                overflowX="auto"
+                maxW="100vw"
+                h="100%"
+                whiteSpace="nowrap"
+                pb="17px"
+                color="white"
+                px="32px"
+                sx={
+                  {
+                    '::-webkit-scrollbar': {
+                      display: 'none'
+                    }
+                  }
+                }
+              >
+
+              </Box>
+              {tasks.map((task) => (
+                <Tr>
+                  <RiDeleteBin5Line onClick={() => deletePost.mutate(task.id)} />
+                  <Td sx={
+                    {
+                      '::-webkit-scrollbar': {
+                        display: 'none'
+                      }
+                    }
+                  }>{task.name.substring(0, 20)}</Td>
+                  <Td >{task.date}</Td>
+                  <Td className="center"><Checkbox /></Td>
+                </Tr>
+              ))}
             </Tbody>
-            <Tfoot>
-              <Tr>
-                <Th>To convert</Th>
-                <Th>into</Th>
-                <Td><Checkbox /></Td>
-              </Tr>
-            </Tfoot>
           </Table>
         </TableContainer>
       </Box>
