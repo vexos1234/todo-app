@@ -29,29 +29,31 @@ import { RiDeleteBin5Line } from 'react-icons/ri'
 
 function Form() {
   const queryClient = useQueryClient();
+  const { register, control, handleSubmit, reset } = useForm();
 
   const request = useQuery(["FetchProduct"], () =>
     axios.get("https://64b8141d21b9aa6eb07987de.mockapi.io/task")
   );
 
   const createTask = useMutation((data) =>
-    axios.post("https://64b8141d21b9aa6eb07987de.mockapi.io/task", data)
+    axios.post("https://64b8141d21b9aa6eb07987de.mockapi.io/task", data), {
+    onSuccess: () => queryClient.invalidateQueries('FetchProduct')
+  }
   );
 
+  const deletePost = useMutation((id) =>
+    axios.delete(`https://64b8141d21b9aa6eb07987de.mockapi.io/task/${id}`), {
+    onSuccess: () => queryClient.invalidateQueries('FetchProduct')
 
-  const { register, control, handleSubmit, reset, isSubmitSuccessful } = useForm();
+  });
 
   const onSubmit = async (data) => {
     const response = await createTask.mutateAsync(data);
-    console.log("Form Submited", data);
-    queryClient.invalidateQueries(["FetchProducts"]);
     console.log(response);
     reset();
   };
 
-  const deletePost = useMutation((id) => {
-    return axios.delete(`https://64b8141d21b9aa6eb07987de.mockapi.io/task/${id}`);
-  });
+
 
   const tasks = request.data?.data;
   console.log(tasks);
@@ -129,7 +131,7 @@ function Form() {
               >
 
               </Box>
-              {tasks.map((task) => (
+              {tasks?.map((task) => (
                 <Tr>
                   <RiDeleteBin5Line onClick={() => deletePost.mutate(task.id)} />
                   <Td sx={
